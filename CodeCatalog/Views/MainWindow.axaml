@@ -1,0 +1,247 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:CodeCatalog.ViewModels"
+        x:Class="CodeCatalog.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        x:Name="RootWindow"
+        Title="Code Catalog"
+        Width="700" Height="720"
+        MinWidth="500" MinHeight="500">
+
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="10">
+
+        <!-- ツールバー -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="6" Margin="0,0,0,8">
+            <Button Content="プログラム追加" Click="OnAddProjectFolderClick"
+                    IsVisible="{Binding !IsDetailView}"/>
+            <Button Content="GitHubからクローン" Command="{Binding CloneFromGitHubCommand}"
+                    IsVisible="{Binding !IsDetailView}"/>
+            <Button Content="← 戻る" Command="{Binding BackCommand}"
+                    IsVisible="{Binding IsDetailView}"/>
+            <TextBox Width="240" Watermark="検索（名前・タグ・種別）"
+                     Text="{Binding SearchText}" VerticalAlignment="Center"
+                     IsVisible="{Binding !IsDetailView}"/>
+        </StackPanel>
+
+        <!-- コンテンツ -->
+        <Panel Grid.Row="1">
+
+            <!-- ── リスト画面 ── -->
+            <ItemsControl ItemsSource="{Binding FilteredProjects}"
+                          IsVisible="{Binding !IsDetailView}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ProjectEntryViewModel" x:CompileBindings="False">
+                        <Border Padding="10,8" BorderBrush="#22000000" BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+
+                                <!-- 左: プログラム情報 -->
+                                <StackPanel Grid.Column="0" Spacing="3" Margin="0,0,12,0">
+                                    <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14"/>
+                                    <TextBlock Text="{Binding Path}" FontSize="11" Foreground="Gray"
+                                               TextTrimming="CharacterEllipsis"/>
+                                    <WrapPanel>
+                                        <ItemsControl ItemsSource="{Binding Tags}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="#E5E7EB" CornerRadius="3"
+                                                            Padding="6,2" Margin="0,0,4,2">
+                                                        <TextBlock Text="{Binding}" FontSize="10"/>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </WrapPanel>
+                                </StackPanel>
+
+                                <!-- 右: アクションボタン -->
+                                <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                            Spacing="4" VerticalAlignment="Center">
+                                    <Button Content="⚙" FontSize="14" Width="32" Height="32" Padding="0"
+                                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                            ToolTip.Tip="ビルド"
+                                            Command="{Binding #RootWindow.DataContext.BuildProjectCommand}"
+                                            CommandParameter="{Binding}"
+                                            IsEnabled="{Binding #RootWindow.DataContext.IsBuilding, Converter={x:Static BoolConverters.Not}}"/>
+                                    <Button Content="▶" FontSize="14" Width="32" Height="32" Padding="0"
+                                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                            ToolTip.Tip="実行 (Release)"
+                                            Command="{Binding #RootWindow.DataContext.RunProjectCommand}"
+                                            CommandParameter="{Binding}"
+                                            IsEnabled="{Binding IsBuilt}"/>
+                                    <Button Content="☰" FontSize="14" Width="32" Height="32" Padding="0"
+                                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                            ToolTip.Tip="詳細"
+                                            Command="{Binding #RootWindow.DataContext.ShowDetailCommand}"
+                                            CommandParameter="{Binding}"/>
+                                </StackPanel>
+
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- ── 詳細画面 ── -->
+            <ScrollViewer IsVisible="{Binding IsDetailView}" VerticalScrollBarVisibility="Auto">
+                <!-- ContentControl: SelectedProject が null の間はテンプレートを描画しない -->
+                <ContentControl Content="{Binding SelectedProject}" x:CompileBindings="False">
+                    <ContentControl.ContentTemplate>
+                        <DataTemplate x:CompileBindings="False">
+                            <StackPanel Spacing="10" Margin="0,0,10,0">
+
+                                <!-- プロジェクト名 (DataContext = ProjectEntryViewModel) -->
+                                <TextBlock Text="{Binding Name}"
+                                           FontWeight="Bold" FontSize="18"/>
+                                <TextBlock Text="{Binding Path}"
+                                           FontSize="11" Foreground="Gray" TextWrapping="Wrap"/>
+
+                                <!-- タグ -->
+                                <ItemsControl ItemsSource="{Binding Tags}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#E5E7EB" CornerRadius="3"
+                                                    Padding="7,3" Margin="0,0,5,0">
+                                                <TextBlock Text="{Binding}" FontSize="11"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <Separator/>
+
+                                <!-- 構成切り替え -->
+                                <StackPanel Orientation="Horizontal" Spacing="0">
+                                    <RadioButton Content="Debug"
+                                                 GroupName="ConfigGroup"
+                                                 IsChecked="{Binding #RootWindow.DataContext.IsDebugConfig}"
+                                                 Click="OnConfigDebugClick" Padding="14,5" CornerRadius="4,0,0,4"/>
+                                    <RadioButton Content="Release"
+                                                 GroupName="ConfigGroup"
+                                                 IsChecked="{Binding #RootWindow.DataContext.IsReleaseConfig}"
+                                                 Click="OnConfigReleaseClick" Padding="14,5" CornerRadius="0,4,4,0"/>
+                                </StackPanel>
+
+                                <!-- ツール警告 (ルート VM) -->
+                                <Border Background="#FFFBEA" BorderBrush="#F59E0B" BorderThickness="1"
+                                        CornerRadius="4" Padding="10,7"
+                                        IsVisible="{Binding #RootWindow.DataContext.ToolWarning,
+                                                    Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="⚠" Foreground="#B45309"/>
+                                        <TextBlock Text="{Binding #RootWindow.DataContext.ToolWarning}"
+                                                   Foreground="#92400E" FontSize="12" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- コマンドプレビュー (ルート VM) -->
+                                <Border Background="#11808080" CornerRadius="3" Padding="10,6">
+                                    <StackPanel Spacing="4">
+                                        <Grid ColumnDefinitions="44,*">
+                                            <TextBlock Grid.Column="0" Text="Build:" FontSize="11"
+                                                       Foreground="Gray" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding #RootWindow.DataContext.BuildCommandLabel}"
+                                                       FontSize="11" FontFamily="Consolas,Monospace"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       ToolTip.Tip="{Binding #RootWindow.DataContext.BuildCommandLabel}"/>
+                                        </Grid>
+                                        <Grid ColumnDefinitions="44,*">
+                                            <TextBlock Grid.Column="0" Text="Run:" FontSize="11"
+                                                       Foreground="Gray" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding #RootWindow.DataContext.RunCommandLabel}"
+                                                       FontSize="11" FontFamily="Consolas,Monospace"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       ToolTip.Tip="{Binding #RootWindow.DataContext.RunCommandLabel}"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- ビルド・実行ボタン -->
+                                <StackPanel Spacing="6">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Button Command="{Binding #RootWindow.DataContext.BuildProjectCommand}"
+                                                CommandParameter="{Binding}"
+                                                IsEnabled="{Binding #RootWindow.DataContext.IsBuilding,
+                                                            Converter={x:Static BoolConverters.Not}}">
+                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                <TextBlock Text="⚙" FontSize="13"/>
+                                                <TextBlock Text="ビルド"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Command="{Binding #RootWindow.DataContext.RunProjectCommand}"
+                                                CommandParameter="{Binding}"
+                                                IsEnabled="{Binding IsBuilt}">
+                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                <TextBlock Text="▶" FontSize="13"/>
+                                                <TextBlock Text="実行"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Command="{Binding #RootWindow.DataContext.DetailedRunCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                <TextBlock Text="▶" FontSize="13"/>
+                                                <TextBlock Text="詳細実行..."/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Command="{Binding #RootWindow.DataContext.GitPullCommand}"
+                                                IsVisible="{Binding IsGitRepo}">
+                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                <TextBlock Text="↻" FontSize="14"/>
+                                                <TextBlock Text="更新"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Button Command="{Binding #RootWindow.DataContext.OpenInFileManagerCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                <TextBlock Text="📁" FontSize="13"/>
+                                                <TextBlock Text="フォルダを開く"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Command="{Binding #RootWindow.DataContext.OpenInVsCodeCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                <TextBlock Text="📝" FontSize="13"/>
+                                                <TextBlock Text="VS Code"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Command="{Binding #RootWindow.DataContext.OpenTerminalCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                <TextBlock Text="⬛" FontSize="11"/>
+                                                <TextBlock Text="ターミナル"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- ビルド出力 (ルート VM) -->
+                                <TextBox Text="{Binding #RootWindow.DataContext.BuildOutput}"
+                                         IsReadOnly="True" AcceptsReturn="True"
+                                         TextWrapping="NoWrap" Height="160"
+                                         FontFamily="Consolas,Monospace" FontSize="11"
+                                         Background="#0A000000"/>
+
+                                <Separator/>
+
+                                <Button Content="カタログから削除"
+                                        Command="{Binding #RootWindow.DataContext.RemoveProjectCommand}"
+                                        Foreground="Red"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ContentControl.ContentTemplate>
+                </ContentControl>
+            </ScrollViewer>
+
+        </Panel>
+
+        <!-- ステータスバー -->
+        <TextBlock Grid.Row="2" Text="{Binding StatusText}"
+                   Foreground="Gray" VerticalAlignment="Center" Margin="0,8,0,0"/>
+    </Grid>
+</Window>

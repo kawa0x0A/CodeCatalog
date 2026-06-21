@@ -1,0 +1,49 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="CodeCatalog.Views.RunDialog"
+        Title="詳細実行設定"
+        Width="480" Height="330"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+
+        <!-- 構成 -->
+        <TextBlock Grid.Row="0" Text="構成" FontSize="12" Foreground="Gray" Margin="0,0,0,4"/>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="16" Margin="0,0,0,12">
+            <RadioButton x:Name="DebugRadio"   Content="Debug"
+                         GroupName="Config" Checked="OnConfigChanged"/>
+            <RadioButton x:Name="ReleaseRadio" Content="Release" IsChecked="True"
+                         GroupName="Config" Checked="OnConfigChanged"/>
+        </StackPanel>
+
+        <!-- 起動モード -->
+        <TextBlock Grid.Row="2" Text="起動モード" FontSize="12" Foreground="Gray" Margin="0,0,0,4"/>
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="16" Margin="0,0,0,12">
+            <RadioButton x:Name="TerminalRadio" Content="ターミナルで実行" IsChecked="True"
+                         GroupName="LaunchMode"/>
+            <RadioButton x:Name="BackgroundRadio" Content="バックグラウンドで実行"
+                         GroupName="LaunchMode"/>
+        </StackPanel>
+
+        <!-- 起動引数 -->
+        <TextBlock Grid.Row="4" Text="起動引数（オプション）" FontSize="12" Foreground="Gray" Margin="0,0,0,4"/>
+        <TextBox Grid.Row="5" x:Name="ArgsBox"
+                 Watermark="例: --port 8080 --verbose"
+                 Margin="0,0,0,12"
+                 TextChanged="OnArgsChanged"/>
+
+        <!-- 実行コマンドプレビュー + ボタン -->
+        <Grid Grid.Row="6" RowDefinitions="Auto,Auto">
+            <Border Grid.Row="0" Background="#11808080" CornerRadius="3" Padding="8,4" Margin="0,0,0,12">
+                <TextBlock x:Name="CommandPreview" FontFamily="Consolas,Monospace" FontSize="11"
+                           TextWrapping="Wrap"/>
+            </Border>
+            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                <Button x:Name="RunButton" Content="▶ 実行" Click="OnRunClick"/>
+                <Button Content="キャンセル" Click="OnCancelClick"/>
+            </StackPanel>
+        </Grid>
+
+    </Grid>
+</Window>

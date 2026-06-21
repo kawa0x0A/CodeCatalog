@@ -1,0 +1,27 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="CodeCatalog.Views.CloneDialog"
+        Title="GitHubからクローン"
+        Width="540" Height="210"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid Margin="16" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+        <TextBlock Grid.Row="0" Text="リポジトリURL" FontSize="12" Foreground="Gray" Margin="0,0,0,4"/>
+        <TextBox Grid.Row="1" x:Name="UrlBox"
+                 Watermark="https://github.com/user/repo"
+                 Margin="0,0,0,12"/>
+
+        <TextBlock Grid.Row="2" Text="保存先フォルダ" FontSize="12" Foreground="Gray" Margin="0,0,0,4"/>
+        <Grid Grid.Row="3" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
+            <TextBox Grid.Column="0" x:Name="TargetBox"
+                     Watermark="フォルダを選択..." IsReadOnly="True"/>
+            <Button Grid.Column="1" Content="参照..." Margin="8,0,0,0" Click="OnBrowseClick"/>
+        </Grid>
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button x:Name="OkButton" Content="クローン" Click="OnOkClick"/>
+            <Button Content="キャンセル" Click="OnCancelClick"/>
+        </StackPanel>
+    </Grid>
+</Window>
